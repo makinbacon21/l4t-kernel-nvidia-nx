@@ -2092,6 +2092,7 @@ static int get_dphdcp_state(struct tegra_dphdcp *dphdcp,
 		pkt->hdcp22 = dphdcp->hdcp22;
 		pkt->port = TEGRA_NVHDCP_PORT_DP;
 	}
+	pkt->sor = dphdcp->dp->sor->ctrl_num;
 	mutex_unlock(&dphdcp->lock);
 	return 0;
 }
