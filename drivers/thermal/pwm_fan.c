@@ -2,7 +2,8 @@
  * pwm_fan.c fan driver that is controlled by pwm
  *
  * Copyright (c) 2013-2022, NVIDIA CORPORATION.  All rights reserved.
- *
+ * Copyright (c) 2021, CTCaer
+ * 
  * Author: Anshul Jain <anshulj@nvidia.com>
  *
  * This program is free software; you can redistribute it and/or modify it
