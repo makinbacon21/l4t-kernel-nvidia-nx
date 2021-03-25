@@ -216,6 +216,13 @@ static void tegra_udrm_postclose(struct drm_device *drm, struct drm_file *file)
 		eventfd_ctx_put(fpriv->efd_ctx_close);
 		fpriv->efd_ctx_close = NULL;
 	}
+
+	if (fpriv->efd_ctx_set_master) {
+		eventfd_signal(fpriv->efd_ctx_set_master, 1);
+		eventfd_ctx_put(fpriv->efd_ctx_set_master);
+		fpriv->efd_ctx_set_master = NULL;
+	}
+
 }
 
 static int tegra_udrm_close_notify_ioctl(struct drm_device *drm,
