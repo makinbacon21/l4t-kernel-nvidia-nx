@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016-2023, NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2021, CTCaer
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -435,7 +436,7 @@ static int actmon_debugfs_create_dev(struct actmon_dev *dev)
 {
 	struct dentry *dir, *d;
 
-	if (dev->state == ACTMON_UNINITIALIZED)
+	if (!dev->dev_name || dev->state == ACTMON_UNINITIALIZED)
 		return 0;
 
 	dir = debugfs_create_dir(dev->dev_name, dbgfs_root);
