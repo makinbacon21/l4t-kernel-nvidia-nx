@@ -4,7 +4,8 @@
  * Copyright (C) 2010 Google, Inc.
  * Author: Erik Gilling <konkers@android.com>
  *
- * Copyright (c) 2010-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2010-2022, NVIDIA CORPORATION, All rights reserved.
+ * Copyright (c) 2021-2022, CTCaer
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and

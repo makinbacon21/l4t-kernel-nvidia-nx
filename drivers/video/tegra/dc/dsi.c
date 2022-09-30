@@ -2,6 +2,7 @@
  * dsi.c: Functions implementing tegra dsi interface.
  *
  * Copyright (c) 2011-2020, NVIDIA CORPORATION, All rights reserved.
+ * Copyright (c) 2022, CTCaer
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -4713,7 +4714,7 @@ static int _tegra_dc_dsi_init(struct tegra_dc *dc)
 				goto err_dsi_clk_put;
 			}
 			/* Reset dsi module if not initialized by bootloader */
-			if (!dc->initialized)
+			if (!dc->bl_initialized)
 				reset_control_reset(dsi_reset);
 		}
 

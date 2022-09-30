@@ -2,6 +2,7 @@
  * dsi_padctrl.c: dsi padcontrol driver.
  *
  * Copyright (c) 2015-2020, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2022, CTCaer
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -262,9 +263,9 @@ struct tegra_dsi_padctrl *tegra_dsi_padctrl_init(struct tegra_dc *dc)
 		goto iounmap;
 	}
 
-	/* Reset dsi padctrl module */
-	if (!dc->initialized)
-		tegra_dsi_padctrl_reset(dsi_padctrl);
+    /* Reset dsi padctrl module if not initialized by bootloader */
+    if (!dc->bl_initialized)
+        tegra_dsi_padctrl_reset(dsi_padctrl);
 
 	dsi_padctrl->prod_list = devm_tegra_prod_get_from_node(&dc->ndev->dev,
 							       np_dsi);
