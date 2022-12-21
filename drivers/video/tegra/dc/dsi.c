@@ -5598,6 +5598,7 @@ static void tegra_dc_dsi_setup_clk_nvdisplay(struct tegra_dc *dc,
 	}
 
 	if (base_clk && rate != clk_get_rate(base_clk)) {
+		tegra_nvdisp_test_and_set_compclk(rate, dc);
 		err = clk_set_rate(base_clk, rate);
 		if (err)
 			dev_err(&dc->ndev->dev, "Failed to set pll freq\n");
