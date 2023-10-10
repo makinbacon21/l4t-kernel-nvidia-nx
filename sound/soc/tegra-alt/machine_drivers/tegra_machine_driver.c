@@ -28,7 +28,6 @@
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
 #include <dt-bindings/sound/tas2552.h>
-#include "rt5640.h"
 #include "rt5659.h"
 #include "sgtl5000.h"
 #include "tegra_asoc_machine_alt.h"
@@ -80,17 +79,6 @@ static const int tegra_machine_srate_values[] = {
 	96000,
 	176400,
 	192000,
-};
-
-static struct snd_soc_jack_pin tegra_machine_hp_jack_pins[] = {
-	{
-		.pin = "x Headphone Jack",
-		.mask = SND_JACK_HEADPHONE,
-	},
-	{
-		.pin = "x Mic Jack",
-		.mask = SND_JACK_MICROPHONE,
-	},
 };
 
 static int tegra_machine_codec_get_rate(struct snd_kcontrol *kcontrol,
@@ -404,43 +392,6 @@ static int tegra_machine_fepi_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int tegra_machine_rt5640_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_card *card = rtd->card;
-	struct snd_soc_jack *jack;
-	int err;
-
-	jack = devm_kzalloc(card->dev, sizeof(struct snd_soc_jack), GFP_KERNEL);
-	if (!jack)
-			return -ENOMEM;
-
-	err = snd_soc_card_jack_new(card, "Headphone Jack", SND_JACK_HEADSET,
-								jack, tegra_machine_hp_jack_pins, 2);
-	if (err) {
-			dev_err(card->dev, "Headphone Jack creation failed %d\n", err);
-			return err;
-	}
-
-	err = tegra_machine_add_codec_jack_control(card, rtd, jack);
-	if (err) {
-			dev_err(card->dev, "Failed to add jack control: %d\n", err);
-			return err;
-	}
-
-	err = rt5640_set_jack(rtd->codec, jack);
-	if (err) {
-			dev_err(card->dev, "Failed to set jack for RT5640: %d\n", err);
-			return err;
-	}
-
-	/* single button supporting play/pause */
-	snd_jack_set_key(jack->jack, SND_JACK_BTN_0, KEY_PLAYPAUSE);
-
-	snd_soc_dapm_sync(&card->dapm);
-
-	return 0;
-}
-
 static int tegra_machine_rt565x_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_card *card = rtd->card;
@@ -483,7 +434,7 @@ static int tegra_machine_rt565x_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int codec_init(struct platform_device *pdev, struct tegra_machine *machine)
+static int codec_init(struct tegra_machine *machine)
 {
 	struct snd_soc_dai_link *dai_links = machine->asoc->dai_links;
 	unsigned int num_links = machine->asoc->num_links, i;
@@ -494,15 +445,10 @@ static int codec_init(struct platform_device *pdev, struct tegra_machine *machin
 	for (i = 0; i < num_links; i++) {
 		if (!dai_links[i].name)
 			continue;
-		
+
 		if (strstr(dai_links[i].name, "rt565x-playback") ||
-		    strstr(dai_links[i].name, "rt565x-codec-sysclk-bclk1")) {
-			if (of_device_is_compatible(pdev->dev.of_node,
-						"nvidia,tegra210-ape-rt5640"))
-				dai_links[i].init = tegra_machine_rt5640_init;	
-			else
-				dai_links[i].init = tegra_machine_rt565x_init;
-		}
+		    strstr(dai_links[i].name, "rt565x-codec-sysclk-bclk1"))
+			dai_links[i].init = tegra_machine_rt565x_init;
 		else if (strstr(dai_links[i].name, "fe-pi-audio-z-v2"))
 			dai_links[i].init = tegra_machine_fepi_init;
 		else if (strstr(dai_links[i].name, "respeaker-4-mic-array"))
@@ -524,9 +470,8 @@ static struct snd_soc_compr_ops tegra_machine_compr_ops = {
 	.shutdown	= tegra_machine_compr_shutdown,
 };
 
-static int add_dai_links(struct platform_device *pdev)
+static int add_dai_links(struct snd_soc_card *card)
 {
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	int ret;
 
@@ -535,7 +480,7 @@ static int add_dai_links(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	ret = codec_init(pdev, machine);
+	ret = codec_init(machine);
 	if (ret < 0)
 		return ret;
 
@@ -561,7 +506,6 @@ static struct snd_soc_card snd_soc_tegra_card = {
 static const struct of_device_id tegra_machine_of_match[] = {
 	{ .compatible = "nvidia,tegra186-ape" },
 	{ .compatible = "nvidia,tegra210-ape" },
-	{ .compatible = "nvidia,tegra210-ape-rt5640" },
 	{},
 };
 
@@ -593,7 +537,7 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	ret = add_dai_links(pdev);
+	ret = add_dai_links(card);
 	if (ret < 0)
 		goto cleanup_asoc;
 
