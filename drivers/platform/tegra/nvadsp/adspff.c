@@ -13,6 +13,8 @@
 
 #define pr_fmt(fmt) "adspff: " fmt
 
+#include <linux/version.h>
+
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/errno.h>
@@ -21,14 +23,20 @@
 #include <linux/kthread.h>
 #include <linux/sched.h>
 #include <linux/sched/rt.h>
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
 #include <linux/sched/task.h>
+#endif
+
 #include <linux/semaphore.h>
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
 #include <linux/list.h>
 
 #include <linux/tegra_nvadsp.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0))
 #include <uapi/linux/sched/types.h>
+#endif
 
 #include "adspff.h"
 #include "dev.h"
