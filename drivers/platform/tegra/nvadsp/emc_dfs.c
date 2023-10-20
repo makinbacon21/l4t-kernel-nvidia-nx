@@ -311,7 +311,7 @@ static int boost_down_count_set(void *data, u64 val)
 
 	if (val)
 		einfo->boost_dn_count = (u32) val;
-		ret = 0;
+
 err:
 	spin_unlock_irqrestore(&speedchange_lock, flags);
 	return ret;
