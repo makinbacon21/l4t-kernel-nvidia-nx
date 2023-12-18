@@ -22,6 +22,7 @@
 
 #include "../dc.h"
 #include "../dsi.h"
+#include "board.h"
 #include "board-panel.h"
 #include "gpio-names.h"
 
@@ -57,7 +58,6 @@
 static u8   color_mode = DCS_SM_COLOR_MODE_DEFAULT;
 static bool color_mode_set = false;
 static u16  gpio_panel_rst = -1;
-static struct backlight_device *dcs_bl = NULL;
 
 static u8 brightness_command[] = { DCS_SET_BRIGHTNESS, 0x00, 0x00 };
 
@@ -245,14 +245,17 @@ static int dsi_s_720p_7_0_postpoweron(struct device *dev)
 	struct tegra_dc_dsi_data *dsi = tegra_dc_get_outdata(dc);
 	int err, irq;
 
-	if (!dcs_bl) {
-		dcs_bl = create_dcs_backlight(dsi, dev);
-		if (IS_ERR(dcs_bl)) {
-			err = PTR_ERR(dcs_bl);
-			dcs_bl = NULL;
+	if (!dsi->info.bl) {
+		dsi->info.bl = create_dcs_backlight(dsi, dev);
+		if (IS_ERR(dsi->info.bl)) {
+			err = PTR_ERR(dsi->info.bl);
+			dsi->info.bl = NULL;
 			dev_err(dev, "failed to register backlight %d\n", err);
 			return err;
 		}
+
+		/* Inform dsi driver that backlight is controlled via dcs */
+		dsi->info.dcs_controlled_bl = true;
 
 		err = sysfs_create_group(&dev->kobj, &dcs_cm_attr_group);
 		if (err) {
@@ -291,7 +294,7 @@ static int dsi_s_720p_7_0_enable(struct device *dev)
 		dev_warn(dev, "rst gpio is not defined in DT\n");
 
 	/* Enable panel */
-	if (!tegra_dc_initialized(dev) && gpio_is_valid(gpio_panel_rst))
+	if (!tegra_dc_bl_initialized(dev) && gpio_is_valid(gpio_panel_rst))
 		gpio_direction_output(gpio_panel_rst, 1);
 
 	return 0;
