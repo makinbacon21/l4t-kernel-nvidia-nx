@@ -62,7 +62,6 @@ static inline ulong nvmap_page_pool_get_unused_pages(void)
 #endif
 
 ulong nvmap_iovmm_get_used_pages(void);
-ulong nvmap_carveout_iram_get_used_pages(void);
 ulong nvmap_carveout_vpr_get_used_pages(void);
 ulong nvmap_carveout_vidmem_get_used_pages(void);
 ulong nvmap_carveout_gen_get_used_pages(void);

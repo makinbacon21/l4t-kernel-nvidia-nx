@@ -1339,14 +1339,6 @@ ulong nvmap_iovmm_get_used_pages(void)
 	return total >> PAGE_SHIFT;
 }
 
-ulong nvmap_carveout_iram_get_used_pages(void)
-{
-	u64 total;
-
-	nvmap_get_total_mss(NULL, &total, NVMAP_HEAP_CARVEOUT_IRAM);
-	return total >> PAGE_SHIFT;
-}
-
 ulong nvmap_carveout_vpr_get_used_pages(void)
 {
 	u64 total;
