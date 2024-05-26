@@ -37,6 +37,7 @@
 #include <soc/tegra/tegra_bpmp.h>
 
 #include <asm/cpuidle.h>
+#include <asm/daifflags.h>
 
 #include "../../kernel/irq/internals.h"
 #include "../../kernel/time/tick-internal.h"
@@ -165,13 +166,11 @@ static struct notifier_block tegra210_cpu_pm_nb = {
 	.notifier_call = tegra210_cpu_pm_notifier,
 };
 
-static int tegra210_cpu_pm_notify(enum cpu_pm_event event, void *v,
-				  int nr_to_call, int *nr_calls)
+static int tegra210_cpu_pm_notify(enum cpu_pm_event event, void *v)
 {
 	int ret;
 
-	ret = __raw_notifier_call_chain(&tegra210_cpu_pm_chain, event, v,
-					nr_to_call, nr_calls);
+	ret = raw_notifier_call_chain(&tegra210_cpu_pm_chain, event, v);
 
 	return notifier_to_errno(ret);
 }
@@ -186,7 +185,7 @@ int tegra210_cpu_pm_enter(void *idle_idx)
 #else
 	read_lock(&tegra210_cpu_pm_lock);
 #endif
-	ret = tegra210_cpu_pm_notify(CPU_PM_ENTER, idle_idx, -1, NULL);
+	ret = tegra210_cpu_pm_notify(CPU_PM_ENTER, idle_idx);
 #ifdef CONFIG_PREEMPT_RT_FULL
 	raw_spin_unlock_irqrestore(&tegra210_cpu_pm_lock, flags);
 #else
@@ -207,7 +206,7 @@ int tegra210_cpu_pm_exit(void *idle_idx)
 #else
 	read_lock(&tegra210_cpu_pm_lock);
 #endif
-	ret = tegra210_cpu_pm_notify(CPU_PM_EXIT, idle_idx, -1, NULL);
+	ret = tegra210_cpu_pm_notify(CPU_PM_EXIT, idle_idx);
 #ifdef CONFIG_PREEMPT_RT_FULL
 	raw_spin_unlock_irqrestore(&tegra210_cpu_pm_lock, flags);
 #else
@@ -309,8 +308,8 @@ static int fast_enable_show(struct seq_file *s, void *data)
 	seq_puts(s, "--------------------------\n");
 
 	for (i = drv->safe_state_index + 1; i < drv->state_count; i++) {
-		seq_printf(s, "  %s	%d	%d\n", drv->states[i].name,
-				i, !drv->states[i].disabled);
+		seq_printf(s, "  %s	%d	%ld\n", drv->states[i].name,
+				i, drv->states[i].flags & CPUIDLE_FLAG_UNUSABLE);
 	}
 
 	return 0;
@@ -341,7 +340,7 @@ static ssize_t fast_enable_write(struct file *fp, const char __user *ubuf,
 	    state_enable >= drv->state_count)
 		return -EINVAL;
 
-	disabled = !drv->states[state_enable].disabled;
+	disabled = drv->states[state_enable].flags & CPUIDLE_FLAG_UNUSABLE;
 
 	for_each_possible_cpu(cpu) {
 		dev = per_cpu(cpuidle_devices, cpu);
@@ -356,7 +355,7 @@ static ssize_t fast_enable_write(struct file *fp, const char __user *ubuf,
 		    state_enable >= drv->state_count)
 			continue;
 
-		drv->states[state_enable].disabled = disabled;
+		drv->states[state_enable].flags = disabled ? CPUIDLE_FLAG_UNUSABLE : 0;
 	}
 
 	return count;
@@ -419,6 +418,7 @@ static int idle_write(void *data, u64 val)
 {
 	struct cpuidle_driver *drv;
 	unsigned long timer_interval_us = (ulong)val;
+    unsigned long daifflags;
 	ktime_t time, interval, sleep;
 
 	preempt_disable();
@@ -435,7 +435,7 @@ static int idle_write(void *data, u64 val)
 	suspend_all_device_irqs();
 	tick_nohz_idle_enter();
 	stop_critical_timings();
-	local_fiq_disable();
+	daifflags = local_daif_save();
 	local_irq_disable();
 
 	interval = ktime_set(0, (NSEC_PER_USEC * timer_interval_us));
@@ -455,7 +455,7 @@ static int idle_write(void *data, u64 val)
 #endif
 
 	local_irq_enable();
-	local_fiq_enable();
+	local_daif_restore(daifflags);
 	start_critical_timings();
 	tick_nohz_idle_exit();
 	resume_all_device_irqs();
@@ -486,12 +486,6 @@ static int debugfs_init(void)
 
 	dfs_file = debugfs_create_u64("forced_idle_state", 0644,
 				      cpuidle_debugfs_root, &idle_state);
-
-	if (!dfs_file) {
-		pr_err("failed to create forced_idle_state\n");
-		goto err_out;
-	}
-
 
 	dfs_file = debugfs_create_file("forced_idle_duration_us", 0200,
 				cpuidle_debugfs_root, NULL, &duration_us_fops);
@@ -553,7 +547,7 @@ static int __init tegra210_cpuidle_init(void)
 	 */
 	for (i = drv->safe_state_index + 1; i < drv->state_count; i++)
 		if (i == t210_pm_data.idle_state_idx[CC6_IDX])
-			drv->states[i].disabled = true;
+			drv->states[i].flags |= CPUIDLE_FLAG_UNUSABLE;
 
 	t210_pm_data.cc6_allow = true;
 
