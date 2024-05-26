@@ -2,7 +2,6 @@
  * Tegra TSEC Module Support
  *
  * Copyright (c) 2012-2021, NVIDIA CORPORATION.  All rights reserved.
- * Copyright (c) 2022, CTCaer
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -595,10 +594,7 @@ int nvhost_tsec_finalize_poweron(struct platform_device *dev)
 	if (err)
 		return err;
 
-	nvhost_flcn_irq_mask_set(dev);
-	nvhost_flcn_irq_dest_set(dev);
-	nvhost_flcn_ctxtsw_init(dev);
-
+	nvhost_flcn_start(dev, TSEC_RESERVE);
 	if (nvhost_is_210()) {
 		/* Populate DEBUGINFO with gsc carveout address */
 		mc_get_carveout_info(&inf, NULL, pdata->carveout_idx);
@@ -608,8 +604,8 @@ int nvhost_tsec_finalize_poweron(struct platform_device *dev)
 		host1x_writel(dev, flcn_debuginfo_r(), co_data_base_addr);
 	}
 
-	nvhost_flcn_start(dev, TSEC_RESERVE);
-
+	nvhost_flcn_irq_mask_set(dev);
+	nvhost_flcn_ctxtsw_init(dev);
 	err = tsec_load_kfuse(dev);
 	if (err)
 		return err;
@@ -761,13 +757,11 @@ int nvhost_tsec_prepare_poweroff(struct platform_device *dev)
 	struct flcn *m = get_flcn(dev);
 	if (m)
 		m->is_booted = false;
-        
-	mutex_lock(&tegra_tsec_lock);
+
 	if (channel) {
 		nvhost_putchannel(channel, 1);
 		channel = NULL;
 	}
-    mutex_unlock(&tegra_tsec_lock);
 
 	return 0;
 }
@@ -810,7 +804,6 @@ static int tsec_probe(struct platform_device *dev)
 	struct nvhost_device_data *pdata = NULL;
 	u32 carveout_addr;
 	u32 carveout_size;
-	DEFINE_DMA_ATTRS(attrs);
 
 	if (dev->dev.of_node) {
 		const struct of_device_id *match;
@@ -865,28 +858,15 @@ static int tsec_probe(struct platform_device *dev)
 
 	err = nvhost_client_device_get_resources(dev);
 	if (err)
-		goto fail;
+		return err;
 	if (!tsec)
 		tsec = dev;
-
-	if (nvhost_module_init(dev)) {
-		dev_err(&dev->dev, "nvhost_module_init failed\n");
-		err = -EAGAIN;
-		goto fail;
-	}
+	nvhost_module_init(dev);
 
 	err = nvhost_client_device_init(dev);
 	if (!err && tegra_get_chip_id() == TEGRA234) {
 		err = nvhost_t23x_tsec_intr_init(dev);
 	}
-
-fail:
-	if (err)
-		dma_unmap_single_attrs(&dev->dev,
-				       pdata->carveout_addr,
-				       pdata->carveout_size,
-				       DMA_TO_DEVICE,
-				       __DMA_ATTR(attrs));
 
 	return err;
 }
