@@ -73,9 +73,9 @@ else
 obj-y += tegra_vpr.o
 endif
 
-ifeq ($(CONFIG_CPU_FREQ),y)
-obj-$(CONFIG_ARCH_TEGRA_21x_SOC) += cpu_emc.o
-endif
+# ifeq ($(CONFIG_CPU_FREQ),y)
+# obj-$(CONFIG_ARCH_TEGRA_21x_SOC) += cpu_emc.o
+# endif
 
 ifdef CONFIG_ARCH_TEGRA_194_SOC
 obj-y += cvnas/
