@@ -6,27 +6,27 @@ config MODS
 	select OF_RESOLVE
 	default n
 	help
-	The NVIDIA MODS driver gives user space software direct access to
-	hardware.  The NVIDIA Diagnostic Software uses this to test hardware.
-	This driver should normally be disabled in all production builds.
+	  The NVIDIA MODS driver gives user space software direct access to
+	  hardware.  The NVIDIA Diagnostic Software uses this to test hardware.
+	  This driver should normally be disabled in all production builds.
 
-	Say Y here to compile the NVIDIA MODS driver into the kernel or say M
-	to compile it as a module.
+	  Say Y here to compile the NVIDIA MODS driver into the kernel or say M
+	  to compile it as a module.
 
-	If unsure, say N here.
+	  If unsure, say N here.
 
 config SAF775x_HWDEP
-        tristate "SAF775x HWDEP Driver"
-        default n
-        depends on I2C || SPI
+	tristate "SAF775x HWDEP Driver"
+	default n
+	depends on I2C || SPI
 
 config SENSORS_NCT1008
 	tristate "ON Semiconductor Temperature Sensor"
 	default n
 	depends on I2C
 	help
-	 Say yes here if you wish to include the ON Semiconductor
-	 NCT1008 Temperature sensor.
+	  Say yes here if you wish to include the ON Semiconductor
+	  NCT1008 Temperature sensor.
 
 config SENSORS_PEX9749
 	tristate "Thermal sensor for PEX9749"
@@ -49,25 +49,25 @@ config THERM_EST
 	bool "Thermal estimator driver"
 	default n
 	help
-	Thermal driver which estimates temperature based of other sensors.
+	  Thermal driver which estimates temperature based of other sensors.
 
 config FAN_THERM_EST
 	tristate "Fan driving temp estimator"
 	help
-	Thermal driver that estimates the fan driving temperature based on
-	other sensors.
+	  Thermal driver that estimates the fan driving temperature based on
+	  other sensors.
 
-	This enables a virtual sensor that polls other registered thermal
-	zone devices for temperature updates.
+	  This enables a virtual sensor that polls other registered thermal
+	  zone devices for temperature updates.
 
 config TSKIN_FAN_THERM_EST
 	tristate "Fan driving tskin temp estimator"
-	---help---
-	Thermal driver that estimates the fan driving temperature by producing
-	tskin based onother sensors.
+	help
+	  Thermal driver that estimates the fan driving temperature by producing
+	  tskin based onother sensors.
 
-	This enables a virtual sensor that polls other registered thermal
-	zone devices for temperature updates.
+	  This enables a virtual sensor that polls other registered thermal
+	  zone devices for temperature updates.
 
 config EQOS_APE_HWDEP
 	tristate "EQOS APE HWDEP Driver"
@@ -104,17 +104,17 @@ config TEGRA_PCIE_EP_MEM
 	tristate "Client driver for Tegra PCIe end point"
 	depends on PCI
 	help
-	 Say Y if Tegra is working in PCIe-End Point mode and a client
-	 driver is required
+	  Say Y if Tegra is working in PCIe-End Point mode and a client
+	  driver is required
 
 config TEGRA_PCIE_DMA_TEST
 	tristate "Client driver for Tegra PCIe DMA test end point function"
 	depends on PCI
 	help
-	 Say Y if client driver is required for Tegra PCIe-End Point mode
-	 enabled with DMA test function.
+	  Say Y if client driver is required for Tegra PCIe-End Point mode
+	  enabled with DMA test function.
 
-	 If in doubt, say "N" to disable Tegra PCIe DMA test driver.
+	  If in doubt, say "N" to disable Tegra PCIe DMA test driver.
 
 if ARCH_TEGRA
 source "drivers/misc/nvs-dfsh/Kconfig"

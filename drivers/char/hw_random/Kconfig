@@ -5,24 +5,24 @@
 if HW_RANDOM
 
 config HW_RANDOM_TEGRA
-       tristate "Tegra Pseudo Random Number Generator support"
-       depends on HW_RANDOM && CRYPTO_DEV_TEGRA_VIRTUAL_SE_INTERFACE
-       default HW_RANDOM
-       ---help---
-         This driver provides kernel-side support for the Pseudo Random
-         Number Generator hardware found on tegra.
+    tristate "Tegra Pseudo Random Number Generator support"
+    depends on HW_RANDOM && CRYPTO_DEV_TEGRA_VIRTUAL_SE_INTERFACE
+    default HW_RANDOM
+    help
+      This driver provides kernel-side support for the Pseudo Random
+      Number Generator hardware found on tegra.
 
-         If unsure, say N.
+      If unsure, say N.
 
 config HW_RANDOM_TEGRA_TRNG
-       tristate "Tegra True Random Number Generator support"
-       depends on HW_RANDOM && CRYPTO_DEV_TEGRA_VIRTUAL_SE_INTERFACE
-       default HW_RANDOM
-       ---help---
-         This driver provides kernel-side support for the True Random
-         Number Generator hardware found on tegra.
+    tristate "Tegra True Random Number Generator support"
+    depends on HW_RANDOM && CRYPTO_DEV_TEGRA_VIRTUAL_SE_INTERFACE
+    default HW_RANDOM
+    help
+      This driver provides kernel-side support for the True Random
+      Number Generator hardware found on tegra.
 
-         If unsure, say N.
+      If unsure, say N.
 
 endif # HW_RANDOM
 
