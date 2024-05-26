@@ -484,7 +484,7 @@ static int debugfs_init(void)
 		goto err_out;
 	}
 
-	dfs_file = debugfs_create_u64("forced_idle_state", 0644,
+	debugfs_create_u64("forced_idle_state", 0644,
 				      cpuidle_debugfs_root, &idle_state);
 
 	dfs_file = debugfs_create_file("forced_idle_duration_us", 0200,
