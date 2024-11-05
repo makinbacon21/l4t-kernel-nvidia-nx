@@ -629,7 +629,7 @@ static void tegra_clk_bpmp_debugfs_add(struct clk *c)
 {
 	struct clk_hw *hw = __clk_get_hw(c);
 
-	if (IS_ERR(clk_debugfs_add_file(hw, "fmon_clamp_rate",
+	if (IS_ERR(__clk_debugfs_add_file(hw, "fmon_clamp_rate",
 					0644, hw, &fmon_clamp_fops)))
 		pr_err("debugfs fmon_clamp failed for %s\n", __clk_get_name(c));
 }

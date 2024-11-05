@@ -233,9 +233,7 @@ static int __init bpmp_ec_debugfs_init(void)
 	if (!d)
 		return -ENOMEM;
 
-	d = debugfs_create_u32("hsm_id", S_IRUGO|S_IWUSR, dir, &hsm_id);
-	if (!d)
-		return -ENOMEM;
+	debugfs_create_u32("hsm_id", S_IRUGO|S_IWUSR, dir, &hsm_id);
 
 	return 0;
 }
