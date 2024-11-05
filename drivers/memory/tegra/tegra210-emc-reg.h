@@ -1874,7 +1874,7 @@ struct emc_table {
 };
 
 struct emc_stats {
-	cputime64_t time_at_clock[TEGRA_EMC_TABLE_MAX_SIZE];
+	u64 time_at_clock[TEGRA_EMC_TABLE_MAX_SIZE];
 	int last_sel;
 	u64 last_update;
 	u64 clkchange_count;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
- * Copyright (c) 2020-2023, CTCaer.
+ * Copyright (c) 2020-2024, CTCaer.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -12,6 +12,7 @@
  * more details.
  */
 
+#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>
@@ -26,7 +27,11 @@
 #include <soc/tegra/tegra_bpmp.h>
 #include <soc/tegra/tegra_emc.h>
 #include <soc/tegra/fuse.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+#include <linux/arm-smccc.h>
+#else
 #include <soc/tegra/pmc.h>
+#endif
 
 #include "tegra210-emc-reg.h"
 
@@ -206,13 +211,11 @@ static atomic_t mr4_temp_poll;
 static atomic_t mr4_force_poll;
 static atomic_t mr4_thresh_poll;
 
-static void emc_mr4_poll(unsigned long nothing);
-static struct timer_list emc_timer_mr4 =
-	TIMER_DEFERRED_INITIALIZER(emc_mr4_poll, 0, 0);
+static void emc_mr4_poll(struct timer_list *t);
+static struct timer_list emc_timer_mr4;
 
-static void emc_train(unsigned long nothing);
-static struct timer_list emc_timer_training =
-	TIMER_INITIALIZER(emc_train, 0, 0);
+static void emc_train(struct timer_list *t);
+static struct timer_list emc_timer_training;
 
 #ifdef CONFIG_DEBUG_FS
 static u8 tegra210_emc_bw_efficiency = 80;
@@ -372,7 +375,7 @@ inline void ccfifo_writel(u32 val, unsigned long addr, u32 delay)
 		emc_base + EMC_CCFIFO_ADDR);
 }
 
-static void emc_mr4_poll(unsigned long nothing)
+static void emc_mr4_poll(struct timer_list *unused)
 {
 	int dram_temp;
 
@@ -472,7 +475,7 @@ void tegra210_emc_mr4_set_freq_thresh(unsigned long thresh)
 	mr4_freq_threshold = thresh;
 }
 
-static void emc_train(unsigned long nothing)
+static void emc_train(struct timer_list *unused)
 {
 	unsigned long flags;
 
@@ -1881,13 +1884,12 @@ static int emc_stats_show(struct seq_file *s, void *data)
 
 		seq_printf(s, "%-10u %-10llu\n",
 			   tegra_emc_table[i].rate,
-			   cputime64_to_clock_t(
-					    tegra_emc_stats.time_at_clock[i]));
+			   tegra_emc_stats.time_at_clock[i]);
 	}
 	seq_printf(s, "%-15s %llu\n", "transitions:",
 		   tegra_emc_stats.clkchange_count);
 	seq_printf(s, "%-15s %llu\n", "time-stamp:",
-		   cputime64_to_clock_t(tegra_emc_stats.last_update));
+		  tegra_emc_stats.last_update);
 
 	return 0;
 }
@@ -2133,9 +2135,8 @@ static int tegra_emc_debug_init(void)
 				 &emc_stats_fops))
 		goto err_out;
 
-	if (!debugfs_create_u32("clkchange_delay", S_IRUGO | S_IWUSR,
-				emc_debugfs_root, (u32 *)&clkchange_delay))
-		goto err_out;
+	debugfs_create_u32("clkchange_delay", S_IRUGO | S_IWUSR,
+			emc_debugfs_root, (u32 *)&clkchange_delay);
 
 	if (!debugfs_create_file("efficiency", S_IRUGO | S_IWUSR,
 				 emc_debugfs_root, NULL, &efficiency_fops))
@@ -2145,9 +2146,8 @@ static int tegra_emc_debug_init(void)
 				 NULL, &emc_usage_table_fops))
 		goto err_out;
 
-	if (!debugfs_create_u8("emc_iso_share", S_IRUGO, emc_debugfs_root,
-			       &tegra210_emc_iso_share))
-		goto err_out;
+	debugfs_create_u8("emc_iso_share", S_IRUGO, emc_debugfs_root,
+			&tegra210_emc_iso_share);
 
 	if (tegra_dram_type == DRAM_TYPE_LPDDR2 ||
 		tegra_dram_type == DRAM_TYPE_LPDDR4) {
@@ -2162,25 +2162,21 @@ static int tegra_emc_debug_init(void)
 	}
 
 	/* DRAM thermals. */
-	if (!debugfs_create_u32("timer_period", S_IRUGO | S_IWUSR,
-				dram_therm_debugfs, &timer_period_mr4))
-		goto err_out;
-	if (!debugfs_create_u32("test_mode", S_IRUGO | S_IWUSR,
-				dram_therm_debugfs, &test_mode))
-		goto err_out;
-	if (!debugfs_create_u32("dram_temp_override", S_IRUGO | S_IWUSR,
-				dram_therm_debugfs, &dram_temp_override))
-		goto err_out;
+	debugfs_create_u32("timer_period", S_IRUGO | S_IWUSR,
+			dram_therm_debugfs, &timer_period_mr4);
+	debugfs_create_u32("test_mode", S_IRUGO | S_IWUSR,
+			dram_therm_debugfs, &test_mode);
+	debugfs_create_u32("dram_temp_override", S_IRUGO | S_IWUSR,
+			dram_therm_debugfs, &dram_temp_override);
 	if (!debugfs_create_file("force_poll", S_IRUGO | S_IWUSR,
 				 dram_therm_debugfs, NULL,
 				 &mr4_force_poll_fops))
 		goto err_out;
 
 	if (tegra_dram_type == DRAM_TYPE_LPDDR4) {
-		if (!debugfs_create_u32("training_timer_period",
-					S_IRUGO | S_IWUSR, emc_debugfs_root,
-					&timer_period_training))
-			goto err_out;
+		debugfs_create_u32("training_timer_period",
+				S_IRUGO | S_IWUSR, emc_debugfs_root,
+				&timer_period_training);
 	}
 
 	if (!debugfs_create_file("tables_info", S_IRUGO, emc_debugfs_root,
@@ -2338,8 +2334,32 @@ static int find_matching_input(struct emc_table *table, struct emc_sel *sel)
 static void tegra210_init_emc_data_smc(struct platform_device *pdev,
 						struct resource *table)
 {
-	struct pmc_smc_regs regs;
 	u64 size, base;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+	struct arm_smccc_res res;
+	arm_smccc_smc(TEGRA_SIP_EMC_COMMAND_FID, EMC_TABLE_ADDR,
+		      0, 0, 0, 0, 0, 0, &res);
+	base = res.a1;
+
+	if (res.a0) {
+		base = 0;
+		pr_err("%s: SMC failed (ret=%ld)\n", __func__, res.a0);
+		WARN_ON(1);
+	}
+
+	arm_smccc_smc(TEGRA_SIP_EMC_COMMAND_FID, EMC_TABLE_SIZE,
+		      0, 0, 0, 0, 0, 0, &res);
+	size = res.a1;
+
+	if (res.a0) {
+		size = 0;
+		pr_err("%s: SMC failed (ret=%ld)\n", __func__, res.a0);
+		WARN_ON(1);
+	}
+
+#else
+	struct pmc_smc_regs regs;
 
 	regs.args[0] = EMC_TABLE_ADDR;
 	regs.args[1] = 0;
@@ -2360,7 +2380,7 @@ static void tegra210_init_emc_data_smc(struct platform_device *pdev,
 	size = regs.args[0] != (u64)(-45) ? regs.args[0] : 0;
 	if (!size)
 		base = 0;
-
+#endif
 	table->start = base;
 	table->end = base + size - 1;
 	table->name = "EMC DVFS Table";
@@ -2557,6 +2577,9 @@ static int tegra210_emc_probe(struct platform_device *pdev)
 	ret = tegra210_init_emc_data(pdev);
 	if (ret)
 		return ret;
+
+	timer_setup(&emc_timer_training, emc_train, 0);
+	timer_setup(&emc_timer_mr4, emc_mr4_poll, TIMER_DEFERRABLE);
 
 	tegra_emc_init_done = true;
 #ifdef CONFIG_DEBUG_FS
