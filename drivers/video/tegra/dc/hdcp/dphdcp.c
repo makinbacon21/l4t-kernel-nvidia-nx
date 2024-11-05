@@ -2197,12 +2197,14 @@ void tegra_dphdcp_set_plug(struct tegra_dphdcp *dphdcp, bool hpd)
 	}
 
 	/* Disable hdcp if no trusted os is running  */
-#ifdef CONFIG_TRUSTED_LITTLE_KERNEL
+#if defined(CONFIG_TRUSTED_LITTLE_KERNEL)
 	if (!te_is_secos_dev_enabled() && !is_trusty_dev_enabled())
 		return;
-#else
+#elif defined(CONFIG_TRUSTY)
 	if (!is_trusty_dev_enabled())
 		return;
+#else
+    /* no TEE */
 #endif
 
 	/* ensure all previous values are reset on hotplug */
