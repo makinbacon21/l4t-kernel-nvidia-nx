@@ -17,9 +17,7 @@
 #include <soc/tegra/tegra-dfll.h>
 #include <soc/tegra/tegra-dvfs.h>
 #include <soc/tegra/fuse.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #include <soc/tegra/tegra_emc.h>
-#endif
 
 #include <dt-bindings/thermal/tegra210b01-trips.h>
 
@@ -1595,8 +1593,6 @@ static int init_cpu_lp_dvfs_table(int *cpu_lp_max_freq_index)
 
 static void adjust_emc_dvfs_from_timing_table(struct dvfs *d)
 {
-	/* FIXME EMC part is not enabled yet on K5.9 */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 	unsigned long rate;
 	int i;
 
@@ -1611,7 +1607,6 @@ static void adjust_emc_dvfs_from_timing_table(struct dvfs *d)
 		if (rate)
 			d->freqs[i] = rate;
 	}
-#endif
 }
 
 static unsigned long dvb_predict_rate(
@@ -2166,12 +2161,7 @@ static void init_core_dvfs_table(int soc_speedo_id, int core_process_id)
 		 * determined by the Tegra BCT and the board specific EMC DFS
 		 * table owned by EMC driver.
 		 */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
-		if (!strcmp(d->clk_name, "emc") && tegra210_emc_is_ready()) {
-#else
-		/* FIXME EMC part is not enabled yet on K5.9 */
-		if (!strcmp(d->clk_name, "emc") && false) {
-#endif
+		if (!strcmp(d->clk_name, "emc")) {
 			struct dvb_dvfs *dvbd = get_emc_dvb_dvfs(soc_speedo_id);
 
 			if (dvbd)
