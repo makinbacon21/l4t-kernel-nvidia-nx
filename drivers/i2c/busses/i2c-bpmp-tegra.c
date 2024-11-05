@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
@@ -19,7 +20,11 @@
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0))
 #include <linux/i2c-gpio.h>
+#else
+#include <linux/platform_data/i2c-gpio.h>
+#endif
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/gpio.h>

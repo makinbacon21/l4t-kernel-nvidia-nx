@@ -19,6 +19,8 @@
 #ifndef NVHOST_SYNCPT_UNIT_INTERFACE_H
 #define NVHOST_SYNCPT_UNIT_INTERFACE_H
 
+#include <linux/scatterlist.h>
+
 struct platform_device;
 struct nvhost_syncpt;
 
