@@ -1691,8 +1691,13 @@ static int dphdcp_poll(struct tegra_dc_dp_data *dp, int timeout, int status)
 #endif
 
 	while (1) {
+#if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE
 		ktime_get_ts(&tm);
 		end_time = timespec_to_ns(&tm);
+#else
+		ktime_get_ts64(&tm);
+		end_time = timespec64_to_ns(&tm);
+#endif
 		if ((end_time - start_time)/1000 >= timeout*1000)
 			return -ETIMEDOUT;
 		e = tegra_dphdcp_read(dp,
