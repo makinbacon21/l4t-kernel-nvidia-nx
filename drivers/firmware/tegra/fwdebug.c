@@ -912,7 +912,7 @@ static int bpmp_module_ready(const char *name, const struct firmware *fw,
 {
 	struct module_hdr *hdr;
 	const int sz = sizeof(firmware_tag);
-	char fmt[sz + 1];
+	char fmt[sizeof(uint8_t) * 32 + 1];
 	int err;
 
 	hdr = (struct module_hdr *)fw->data;
@@ -943,11 +943,9 @@ static int bpmp_module_ready(const char *name, const struct firmware *fw,
 		return err;
 	}
 
-	if (!debugfs_create_x32("handle", S_IRUGO, m->root, &m->handle))
-		return -ENOMEM;
+	debugfs_create_x32("handle", S_IRUGO, m->root, &m->handle);
 
-	if (!debugfs_create_x32("size", S_IRUGO, m->root, &m->size))
-		return -ENOMEM;
+	debugfs_create_x32("size", S_IRUGO, m->root, &m->size);
 
 	list_add_tail(&m->entry, &modules);
 
