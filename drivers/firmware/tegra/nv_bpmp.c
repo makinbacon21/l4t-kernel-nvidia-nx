@@ -14,16 +14,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/version.h>
 #include <linux/clk.h>
 #include <linux/dma-iommu.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-mapping.h>
+#endif
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/syscore_ops.h>
 #include <linux/tegra-firmwares.h>
 #include <linux/tegra-ivc.h>
-#include <linux/version.h>
 #include <soc/tegra/bpmp_abi.h>
 #include <soc/tegra/tegra_bpmp.h>
 #include <soc/tegra/tegra_powergate.h>
@@ -229,8 +233,12 @@ static int bpmp_setup_allocator(struct device *dev)
 	virt_base = ioremap_cache(ivm->ipa, ivm->size);
 
 	flags = DMA_MEMORY_NOMAP;
-	ret = dma_declare_coherent_memory(dev, ivm->ipa, 0, ivm->size,
-			flags);
+	ret = dma_declare_coherent_memory(dev, ivm->ipa, 0, ivm->size
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+			, flags);
+#else
+            );
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
 	if (!(ret & DMA_MEMORY_NOMAP)) {
