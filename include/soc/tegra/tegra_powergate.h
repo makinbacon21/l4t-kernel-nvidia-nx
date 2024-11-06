@@ -18,7 +18,9 @@
 #define _LINUX_TEGRA_POWERGATE_H
 
 #include <linux/kernel.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #include <linux/tegra-powergate.h>
+#endif
 #include <dt-bindings/soc/tegra210-powergate.h>
 #include <dt-bindings/soc/tegra186-powergate.h>
 #include <dt-bindings/soc/tegra194-powergate.h>
