@@ -2594,11 +2594,20 @@ static int tegra210b01_emc_probe(struct platform_device *pdev)
 	struct device_node *node;
 	struct resource *r;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+	emc_clk = devm_clk_get(&pdev->dev, "emc");
+	if (IS_ERR(emc_clk)) {
+		dev_err(&pdev->dev, "Can not find EMC clock\n");
+		return -EINVAL;
+	}
+	emc_override_clk = NULL; // we do not use override on mainline
+#else
 	emc_override_clk = devm_clk_get(&pdev->dev, "emc_override");
 	if (IS_ERR(emc_override_clk)) {
 		dev_err(&pdev->dev, "Cannot find T210B01 EMC override clock\n");
 		return -ENODATA;
 	}
+#endif
 
 	node = of_find_matching_node(NULL, mc_match);
 	if (node)
